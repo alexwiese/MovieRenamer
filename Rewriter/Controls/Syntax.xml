@@ -1,0 +1,12 @@
+﻿<SyntaxDefinition name="FileSystemTemplate"
+                  xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+    
+  <RuleSet>
+    <Span foreground="Blue" fontWeight="bold" begin="{" end="}" />
+
+    <Keywords fontWeight="bold" foreground="Red">
+      <Word>\</Word>
+      <Word>/</Word>
+    </Keywords>
+  </RuleSet>
+</SyntaxDefinition>

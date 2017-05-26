@@ -1,0 +1,49 @@
+﻿<views:View x:TypeArguments="viewModels:MainViewModel" x:Class="Rewriter.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:Rewriter.Controls"
+        xmlns:viewModels="clr-namespace:Rewriter.ViewModels"
+        xmlns:views="clr-namespace:Rewriter.Views"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance viewModels:MainViewModel}"
+        Title="Movie Renamer" Height="350" Width="525" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        
+        <controls:SettingsControl DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" />
+        
+        <UniformGrid Grid.Row="1" HorizontalAlignment="Center">
+            <UniformGrid.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="MinWidth" Value="200" />
+                    <Setter Property="Margin" Value="10,5" />
+                </Style>
+                
+            </UniformGrid.Resources>
+            <Button Click="RefreshSourceFilesButton_Click">Refresh Source Files</Button>
+            <Button Click="GetMovieInfoButton_Click">Get Movie Info</Button>
+            <Button Click="RenameFilesButton_Click">Rename Files</Button>
+        </UniformGrid>
+        
+        <ListView Grid.Row="2"
+                  ItemsSource="{Binding Changes}">
+            <ListView.View>
+                <GridView x:Name="MainGridView">
+                    <GridViewColumn Header="Source" DisplayMemberBinding="{Binding TruncatedSourceFilePath}" Width="Auto" />
+                    <GridViewColumn Header="Destination" DisplayMemberBinding="{Binding DestinationFilePath}" Width="Auto" />
+                    <GridViewColumn Header="Title" DisplayMemberBinding="{Binding MovieInfo.Title}" Width="Auto" />
+                    <GridViewColumn Header="Year" DisplayMemberBinding="{Binding MovieInfo.ReleaseDate.Year}" Width="Auto" />
+                    <GridViewColumn Header="Genre" DisplayMemberBinding="{Binding MovieInfo.PrimaryGenre}" Width="Auto" />
+                    <GridViewColumn Header="Unknown Movie" DisplayMemberBinding="{Binding MovieInfo.IsUnknownMovie}" Width="Auto" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</views:View>
+
