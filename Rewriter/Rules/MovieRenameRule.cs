@@ -31,7 +31,7 @@ namespace Rewriter.Rules
         {
             object GetTokenValue(Token token)
             {
-                return token.ValueFactory(movieInfo, sourceFile);
+                return token.ValueFactory(movieInfo, sourceFile) ?? "Unknown";
             }
 
             template = template ?? string.Empty;

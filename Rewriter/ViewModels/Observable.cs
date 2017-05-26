@@ -4,7 +4,7 @@ using Rewriter.Properties;
 
 namespace Rewriter.ViewModels
 {
-    public abstract class ViewModel : INotifyPropertyChanged
+    public abstract class Observable : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 

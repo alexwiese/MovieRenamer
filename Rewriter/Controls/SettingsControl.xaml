@@ -41,25 +41,34 @@
             <RowDefinition />
             <RowDefinition />
             <RowDefinition />
-            <RowDefinition />
         </Grid.RowDefinitions>
 
         <Label>Source Directory</Label>
-        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SourceDirectory}" />
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+            <TextBox Text="{Binding SourceDirectory}" Name="SourceDirectoryTextBox" />
+            <Button Command="{Binding BrowseSourceFolderCommand}" 
+                    Height="{Binding ActualHeight, ElementName=SourceDirectoryTextBox}"
+                    Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}">...</Button>
+        </StackPanel>
+        
+        <Label Grid.Row="1" Grid.Column="0">Base Directory</Label>
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <TextBox Text="{Binding DestinationDirectory}" Name="DestinationDirectoryTextBox" />
+            <Button Command="{Binding BrowseDestinationFolderCommand}" 
+                    Height="{Binding ActualHeight, ElementName=DestinationDirectoryTextBox}"
+                    Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}">...</Button>
+        </StackPanel>
 
-        <Label Grid.Row="2" Grid.Column="0">Base Directory</Label>
-        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding DestinationDirectory}" />
-
-        <Label Grid.Row="3" Grid.Column="0">Directory Naming Rule</Label>
+        <Label Grid.Row="2" Grid.Column="0">Directory Naming Rule</Label>
         <avalonEdit:TextEditor
-            Grid.Row="3"
+            Grid.Row="2"
             Grid.Column="1"
             TextChanged="DirectoryRuleTextEditor_OnTextChanged"
             Name="DirectoryRuleTextEditor"/>
 
-        <Label Grid.Row="4" Grid.Column="0">File Naming Rule</Label>
+        <Label Grid.Row="3" Grid.Column="0">File Naming Rule</Label>
         <avalonEdit:TextEditor
-            Grid.Row="4"
+            Grid.Row="3"
             Grid.Column="1"
             TextChanged="FileRuleTextEditor_OnTextChanged"
             Name="FileRuleTextEditor"/>

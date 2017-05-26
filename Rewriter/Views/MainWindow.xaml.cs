@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using Rewriter.Core;
+using Rewriter.MovieDb;
 using Rewriter.Properties;
 using Rewriter.ViewModels;
 
@@ -59,9 +60,36 @@ namespace Rewriter.Views
 
         private async void GetMovieInfoButton_Click(object sender, RoutedEventArgs e)
         {
+            if (ViewModel.IsRefreshingMovieCache)
+            {
+                ViewModel.CancelRefreshMovieInfo();
+            }
+            else
+            {
+                try
+                {
+                    await ViewModel.RefreshCache();
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show(this, exception.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void RenameFilesButton_Click(object sender, RoutedEventArgs e)
+        {
             try
             {
-                await ViewModel.RefreshCache();
+                foreach (var sourceFile in ViewModel.SourceFiles)
+                {
+                    if (!ViewModel.MovieInfoCache.TryGetValue(sourceFile, out MovieInfo movieInfo))
+                    {
+                        await ViewModel.RefreshCache();
+                        ViewModel.MovieInfoCache.TryGetValue(sourceFile, out movieInfo);
+                    }
+                    ViewModel.FileProcessor.Process(sourceFile, movieInfo);
+                }
             }
             catch (Exception exception)
             {
@@ -69,17 +97,16 @@ namespace Rewriter.Views
             }
         }
 
-        private void RenameFilesButton_Click(object sender, RoutedEventArgs e)
-        {
-            foreach (var sourceFile in ViewModel.SourceFiles)
-            {
-                ViewModel.FileProcessor.Process(sourceFile, ViewModel.MovieInfoCache[sourceFile]);
-            }
-        }
-
         private async void RefreshSourceFilesButton_Click(object sender, RoutedEventArgs e)
         {
-            await ViewModel.RefreshSourceFiles();
+            if (ViewModel.IsRefreshingSourceFiles)
+            {
+                ViewModel.CancelRefreshSourceFiles();
+            }
+            else
+            {
+                await ViewModel.RefreshSourceFiles();
+            }
         }
     }
 }

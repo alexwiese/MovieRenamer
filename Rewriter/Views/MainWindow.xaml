@@ -6,10 +6,15 @@
         xmlns:controls="clr-namespace:Rewriter.Controls"
         xmlns:viewModels="clr-namespace:Rewriter.ViewModels"
         xmlns:views="clr-namespace:Rewriter.Views"
+        xmlns:valueConverters="clr-namespace:Rewriter.ValueConverters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance viewModels:MainViewModel}"
-        Title="Movie Renamer" Height="350" Width="525" WindowStartupLocation="CenterScreen">
+        Title="Movie Renamer" Height="Auto" Width="Auto" WindowStartupLocation="CenterScreen">
     <Grid>
+        <Grid.Resources>
+            <valueConverters:TextBooleanValueConverter x:Key="TextBooleanValueConverter" />
+        </Grid.Resources>
+        
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -18,7 +23,7 @@
         
         <controls:SettingsControl DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" />
         
-        <UniformGrid Grid.Row="1" HorizontalAlignment="Center">
+        <UniformGrid Grid.Row="1" HorizontalAlignment="Center" Columns="3">
             <UniformGrid.Resources>
                 <Style TargetType="Button">
                     <Setter Property="MinWidth" Value="200" />
@@ -26,8 +31,8 @@
                 </Style>
                 
             </UniformGrid.Resources>
-            <Button Click="RefreshSourceFilesButton_Click">Refresh Source Files</Button>
-            <Button Click="GetMovieInfoButton_Click">Get Movie Info</Button>
+            <Button Click="RefreshSourceFilesButton_Click" Content="{Binding IsRefreshingSourceFiles, Converter={StaticResource TextBooleanValueConverter}, ConverterParameter=Cancel, TargetNullValue=Refresh Source Files}" />
+            <Button Click="GetMovieInfoButton_Click" Content="{Binding IsRefreshingMovieCache, Converter={StaticResource TextBooleanValueConverter}, ConverterParameter=Cancel, TargetNullValue=Get Movie Info}" />
             <Button Click="RenameFilesButton_Click">Rename Files</Button>
         </UniformGrid>
         

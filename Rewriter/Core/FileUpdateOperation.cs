@@ -4,10 +4,11 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Rewriter.MovieDb;
 using Rewriter.Properties;
+using Rewriter.ViewModels;
 
 namespace Rewriter.Core
 {
-    public class FileUpdateOperation : INotifyPropertyChanged
+    public class FileUpdateOperation : Observable
     {
         private string _destinationFilePath;
         private MovieInfo _movieInfo;
@@ -39,15 +40,16 @@ namespace Rewriter.Core
             {
                 if (Equals(value, _destinationFilePath)) return;
                 _destinationFilePath = value;
-                OnPropertyChanged();
-
+           
                 var lcs = GetLongestCommonSubstring(SourceFilePath, value);
 
                 if (lcs.Length > 0)
                 {
                     TruncatedSourceFilePath = SourceFilePath.Replace(lcs, string.Empty);
-                    DestinationFilePath = DestinationFilePath.Replace(lcs, string.Empty);
+                    _destinationFilePath = DestinationFilePath.Replace(lcs, string.Empty);
                 }
+
+                OnPropertyChanged();
             }
         }
 
@@ -80,16 +82,9 @@ namespace Rewriter.Core
         {
             for (var i = 1; i <= str.Length; i++)
             {
-                yield return str.Substring(0, i);
+                if (str[i - 1] == '\\')
+                    yield return str.Substring(0, i);
             }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

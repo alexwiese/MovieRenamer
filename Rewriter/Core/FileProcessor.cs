@@ -26,7 +26,7 @@ namespace Rewriter.Core
             if (destinationDirectory != null && !Directory.Exists(destinationDirectory))
                 Directory.CreateDirectory(destinationDirectory);
 
-            File.Copy(sourceFile, destinationFile, true);
+            File.Move(sourceFile, destinationFile);
         }
 
         public string GetRelocatedFilePath(string sourceFile, MovieInfo movieInfo)
@@ -41,11 +41,27 @@ namespace Rewriter.Core
 
         private static string Sanitize(string input)
         {
+            bool IsUnc(string path)
+            {
+                var root = Path.GetPathRoot(path);
+                
+                if (root?.StartsWith(@"\\") == true)
+                    return true;
+                
+                var drive = new DriveInfo(root);
+                return drive.DriveType == DriveType.Network;
+            }
+
+            var pathRoot = IsUnc(input) ? string.Empty : Path.GetPathRoot(input);
+
+            input = input.Substring(pathRoot.Length);
+
             foreach (var invalidFileNameChar in Path.GetInvalidFileNameChars().Except(new [] {'\\', '/'}))
             {
                 input = input.Replace(invalidFileNameChar.ToString(), "");
             }
-            return input;
+
+            return pathRoot + input;
         }
     }
 }

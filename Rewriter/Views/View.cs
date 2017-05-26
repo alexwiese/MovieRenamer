@@ -4,7 +4,7 @@ using Rewriter.ViewModels;
 namespace Rewriter.Views
 {
     public abstract class View<TViewModel> : Window
-        where TViewModel : ViewModel, new()
+        where TViewModel : Observable, new()
     {
         protected View()
         {
