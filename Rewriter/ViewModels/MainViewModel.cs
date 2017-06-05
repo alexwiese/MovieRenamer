@@ -12,6 +12,7 @@ using System.Windows.Input;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Rewriter.Commands;
 using Rewriter.Core;
+using Rewriter.Logging;
 using Rewriter.MovieDb;
 using Rewriter.Properties;
 using Rewriter.Rules;
@@ -35,6 +36,7 @@ namespace Rewriter.ViewModels
         {
             BrowseSourceFolderCommand = new RelayCommand(BrowseSourceFolder);
             BrowseDestinationFolderCommand = new RelayCommand(BrowseDestinationFolder);
+            ViewLogCommand = new RelayCommand(ViewLog);
         }
 
         public bool IsRefreshingSourceFiles
@@ -69,6 +71,7 @@ namespace Rewriter.ViewModels
                 if (value == _destinationDirectory) return;
                 _destinationDirectory = value;
                 Settings.Default.LastDestinationDirectory = value;
+                Logger.Info($"Destination directory updated: {value}");
                 OnPropertyChanged();
             }
         }
@@ -107,6 +110,7 @@ namespace Rewriter.ViewModels
                 if (value == _sourceDirectory) return;
                 _sourceDirectory = value;
                 Settings.Default.LastSourceDirectory = value;
+                Logger.Info($"Source directory updated: {value}");
                 OnPropertyChanged();
             }
         }
@@ -119,6 +123,7 @@ namespace Rewriter.ViewModels
 
         public ICommand BrowseSourceFolderCommand { get; }
         public ICommand BrowseDestinationFolderCommand { get; }
+        public ICommand ViewLogCommand { get; }
 
         public async Task Refresh()
         {
@@ -128,6 +133,8 @@ namespace Rewriter.ViewModels
 
         public async Task RefreshCache()
         {
+            Logger.Info("Refreshing cache");
+
             if (IsRefreshingSourceFiles)
             {
                 CancelRefreshSourceFiles();
@@ -139,48 +146,63 @@ namespace Rewriter.ViewModels
 
                 try
                 {
-                    foreach (var sourceFile in SourceFiles)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        
-                        if (!MovieInfoCache.TryGetValue(sourceFile, out MovieInfo movieInfo))
-                        {
-                            var regexMatch = Regex.Match(Path.GetFileNameWithoutExtension(sourceFile),
-                                @"^(?<title>.+?)(?<year>\d{4}|$)", RegexOptions.Compiled);
+                    await Task.Run(async () =>
+                   {
+                       foreach (var sourceFile in SourceFiles)
+                       {
+                           cancellationToken.ThrowIfCancellationRequested();
 
-                            var titleFromFileName = regexMatch
-                                .Groups["title"]
-                                .Value
-                                .Replace('_', ' ')
-                                .Replace('.', ' ');
+                           if (!MovieInfoCache.TryGetValue(sourceFile, out MovieInfo movieInfo))
+                           {
+                               var regexMatch = Regex.Match(Path.GetFileNameWithoutExtension(sourceFile),
+                                   @"^(?<title>.+?)(?<year>\d{4}|$)", RegexOptions.Compiled);
 
-                            var yearFromFileName = regexMatch
-                                .Groups["year"]
-                                .Value
-                                .Replace('_', ' ')
-                                .Replace('.', ' ');
+                               var titleFromFileName = regexMatch
+                                   .Groups["title"]
+                                   .Value
+                                   .Replace('_', ' ')
+                                   .Replace('.', ' ');
 
-                            int.TryParse(yearFromFileName, out int year);
+                               var yearFromFileName = regexMatch
+                                   .Groups["year"]
+                                   .Value
+                                   .Replace('_', ' ')
+                                   .Replace('.', ' ');
 
-                            movieInfo = await MovieClient.Search(titleFromFileName, year);
-                            MovieInfoCache[sourceFile] = movieInfo;
-                        }
+                               int.TryParse(yearFromFileName, out int year);
 
-                        cancellationToken.ThrowIfCancellationRequested();
-                        var change = Changes.First(c => c.SourceFilePath == sourceFile);
-                        change.MovieInfo = movieInfo;
+                               Logger.Info($"Obtaining movie information from TMDb with title '{titleFromFileName}' and year {year:D4}");
 
-                        try
-                        {
-                            change.DestinationFilePath = FileProcessor.GetRelocatedFilePath(sourceFile, movieInfo);
-                        }
-                        catch
-                        {
-                        }
-                    }
+                               movieInfo = await MovieClient.Search(titleFromFileName, year);
+                               MovieInfoCache[sourceFile] = movieInfo;
+
+                               Logger.Info($"Movie information result: {(movieInfo is UnknownMovie ? "Not found" : $"{movieInfo.Title} ({movieInfo.ReleaseDate:yyyy})")}");
+                           }
+
+                           cancellationToken.ThrowIfCancellationRequested();
+
+                           var change = Changes.First(c => c.SourceFilePath == sourceFile);
+
+                           await Application.Current.Dispatcher.InvokeAsync(() =>
+                           {
+                               change.MovieInfo = movieInfo;
+
+                               try
+                               {
+                                   change.DestinationFilePath = FileProcessor.GetRelocatedFilePath(sourceFile, movieInfo);
+                                   Logger.Info($"Destination file path result: {change.DestinationFilePath}");
+                               }
+                               catch (Exception exception)
+                               {
+                                   Logger.Error(exception);
+                               }
+                           });
+                       }
+                   }, cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {
+                    Logger.Info("Refresh Cache operation cancelled");
                 }
             }
         }
@@ -199,6 +221,8 @@ namespace Rewriter.ViewModels
 
         public async Task RefreshSourceFiles()
         {
+            Logger.Info("Refreshing source files");
+
             if (IsRefreshingMovieCache)
             {
                 CancelRefreshMovieInfo();
@@ -216,6 +240,8 @@ namespace Rewriter.ViewModels
 
                 try
                 {
+                    var fileCount = 0;
+
                     await Task.Run(() =>
                     {
                         cancellationToken.ThrowIfCancellationRequested();
@@ -235,13 +261,17 @@ namespace Rewriter.ViewModels
                                 fileInfo.Length < 50 * 1024 * 1024)
                                 continue;
 
+                            fileCount++;
                             SourceFiles.Add(sourceFile);
                             Application.Current.Dispatcher.Invoke(() => Changes.Add(new FileUpdateOperation(sourceFile)));
                         }
                     }, cancellationToken);
+
+                    Logger.Info($"Finished refreshing source files. {fileCount} files found");
                 }
                 catch (OperationCanceledException)
                 {
+                    Logger.Info("Refresh source files operation cancelled");
                 }
             }
         }
@@ -266,6 +296,18 @@ namespace Rewriter.ViewModels
             {
                 DestinationDirectory = dialog.FileName;
             }
+        }
+
+        private void ViewLog(object obj)
+        {
+            var viewLogWindow = new Window
+            {
+                Content = new ViewLogControl(),
+                Title = "Log",
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Owner = Application.Current.MainWindow
+            };
+            viewLogWindow.Show();
         }
 
         private void OnNamingRuleChanged()

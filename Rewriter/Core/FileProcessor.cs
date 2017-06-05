@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
+using Rewriter.Logging;
 using Rewriter.MovieDb;
 using Rewriter.Rules;
 
@@ -18,14 +20,21 @@ namespace Rewriter.Core
             _fileRule = fileRule;
         }
 
-        public void Process(string sourceFile, MovieInfo movieInfo)
+        public void MoveFiles(string sourceFile, MovieInfo movieInfo)
         {
             var destinationFile = GetRelocatedFilePath(sourceFile, movieInfo);
             var destinationDirectory = Path.GetDirectoryName(destinationFile);
 
             if (destinationDirectory != null && !Directory.Exists(destinationDirectory))
+            {
+                Logger.Info($"Creating directory '{destinationDirectory}'");
                 Directory.CreateDirectory(destinationDirectory);
+            }
 
+            if (sourceFile.Equals(destinationFile, StringComparison.InvariantCultureIgnoreCase))
+                return;
+
+            Logger.Info($"Moving file from '{sourceFile}' to '{destinationDirectory}'");
             File.Move(sourceFile, destinationFile);
         }
 
@@ -33,30 +42,24 @@ namespace Rewriter.Core
         {
             var sourceFileInfo = new FileInfo(sourceFile);
 
-            var destinationDirectory = Path.Combine(_baseDirectory, _directoryRule(movieInfo, sourceFileInfo));
-            var destinationFile = Path.Combine(destinationDirectory, _fileRule(movieInfo, sourceFileInfo));
+            var directoryRuleResult = Sanitize(_directoryRule(movieInfo, sourceFileInfo));
+            var destinationDirectory = Path.Combine(_baseDirectory, directoryRuleResult);
 
-           return Sanitize(destinationFile);
+            var fileRuleResult = Sanitize(_fileRule(movieInfo, sourceFileInfo));
+            var destinationFile = Path.Combine(destinationDirectory, fileRuleResult);
+
+            return Sanitize(destinationFile);
         }
 
         private static string Sanitize(string input)
         {
-            bool IsUnc(string path)
-            {
-                var root = Path.GetPathRoot(path);
-                
-                if (root?.StartsWith(@"\\") == true)
-                    return true;
-                
-                var drive = new DriveInfo(root);
-                return drive.DriveType == DriveType.Network;
-            }
+            bool IsUnc(string path) => path?.StartsWith(@"\\") == true;
 
-            var pathRoot = IsUnc(input) ? string.Empty : Path.GetPathRoot(input);
+            var pathRoot = IsUnc(input) ? string.Empty : Path.GetPathRoot(input.Substring(0, 3));
 
             input = input.Substring(pathRoot.Length);
 
-            foreach (var invalidFileNameChar in Path.GetInvalidFileNameChars().Except(new [] {'\\', '/'}))
+            foreach (var invalidFileNameChar in Path.GetInvalidFileNameChars().Except(new[] { '\\', '/' }))
             {
                 input = input.Replace(invalidFileNameChar.ToString(), "");
             }

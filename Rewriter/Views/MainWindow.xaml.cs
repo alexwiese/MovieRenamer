@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using Rewriter.Core;
+using Rewriter.Logging;
 using Rewriter.MovieDb;
 using Rewriter.Properties;
 using Rewriter.ViewModels;
@@ -72,6 +73,7 @@ namespace Rewriter.Views
                 }
                 catch (Exception exception)
                 {
+                    Logger.Error(exception);
                     MessageBox.Show(this, exception.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -88,11 +90,13 @@ namespace Rewriter.Views
                         await ViewModel.RefreshCache();
                         ViewModel.MovieInfoCache.TryGetValue(sourceFile, out movieInfo);
                     }
-                    ViewModel.FileProcessor.Process(sourceFile, movieInfo);
+
+                    ViewModel.FileProcessor.MoveFiles(sourceFile, movieInfo);
                 }
             }
             catch (Exception exception)
             {
+                Logger.Error(exception);
                 MessageBox.Show(this, exception.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

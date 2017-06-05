@@ -10,45 +10,53 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance viewModels:MainViewModel}"
         Title="Movie Renamer" Height="Auto" Width="Auto" WindowStartupLocation="CenterScreen">
-    <Grid>
-        <Grid.Resources>
-            <valueConverters:TextBooleanValueConverter x:Key="TextBooleanValueConverter" />
-        </Grid.Resources>
-        
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition />
-        </Grid.RowDefinitions>
-        
-        <controls:SettingsControl DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" />
-        
-        <UniformGrid Grid.Row="1" HorizontalAlignment="Center" Columns="3">
-            <UniformGrid.Resources>
-                <Style TargetType="Button">
-                    <Setter Property="MinWidth" Value="200" />
-                    <Setter Property="Margin" Value="10,5" />
-                </Style>
-                
-            </UniformGrid.Resources>
-            <Button Click="RefreshSourceFilesButton_Click" Content="{Binding IsRefreshingSourceFiles, Converter={StaticResource TextBooleanValueConverter}, ConverterParameter=Cancel, TargetNullValue=Refresh Source Files}" />
-            <Button Click="GetMovieInfoButton_Click" Content="{Binding IsRefreshingMovieCache, Converter={StaticResource TextBooleanValueConverter}, ConverterParameter=Cancel, TargetNullValue=Get Movie Info}" />
-            <Button Click="RenameFilesButton_Click">Rename Files</Button>
-        </UniformGrid>
-        
-        <ListView Grid.Row="2"
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="View">
+                <MenuItem Header="View Log..." Command="{Binding ViewLogCommand}" />
+            </MenuItem>
+        </Menu>
+
+        <Grid>
+            <Grid.Resources>
+                <valueConverters:TextBooleanValueConverter x:Key="TextBooleanValueConverter" />
+            </Grid.Resources>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <controls:SettingsControl DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" />
+
+            <UniformGrid Grid.Row="1" HorizontalAlignment="Center" Columns="3">
+                <UniformGrid.Resources>
+                    <Style TargetType="Button">
+                        <Setter Property="MinWidth" Value="200" />
+                        <Setter Property="Margin" Value="10,5" />
+                    </Style>
+
+                </UniformGrid.Resources>
+                <Button Click="RefreshSourceFilesButton_Click" Content="{Binding IsRefreshingSourceFiles, Converter={StaticResource TextBooleanValueConverter}, ConverterParameter=Cancel, TargetNullValue=Refresh Source Files}" />
+                <Button Click="GetMovieInfoButton_Click" Content="{Binding IsRefreshingMovieCache, Converter={StaticResource TextBooleanValueConverter}, ConverterParameter=Cancel, TargetNullValue=Get Movie Info}" />
+                <Button Click="RenameFilesButton_Click">Rename Files</Button>
+            </UniformGrid>
+
+            <ListView Grid.Row="2"
                   ItemsSource="{Binding Changes}">
-            <ListView.View>
-                <GridView x:Name="MainGridView">
-                    <GridViewColumn Header="Source" DisplayMemberBinding="{Binding TruncatedSourceFilePath}" Width="Auto" />
-                    <GridViewColumn Header="Destination" DisplayMemberBinding="{Binding DestinationFilePath}" Width="Auto" />
-                    <GridViewColumn Header="Title" DisplayMemberBinding="{Binding MovieInfo.Title}" Width="Auto" />
-                    <GridViewColumn Header="Year" DisplayMemberBinding="{Binding MovieInfo.ReleaseDate.Year}" Width="Auto" />
-                    <GridViewColumn Header="Genre" DisplayMemberBinding="{Binding MovieInfo.PrimaryGenre}" Width="Auto" />
-                    <GridViewColumn Header="Unknown Movie" DisplayMemberBinding="{Binding MovieInfo.IsUnknownMovie}" Width="Auto" />
-                </GridView>
-            </ListView.View>
-        </ListView>
-    </Grid>
+                <ListView.View>
+                    <GridView x:Name="MainGridView">
+                        <GridViewColumn Header="Source" DisplayMemberBinding="{Binding TruncatedSourceFilePath}" Width="Auto" />
+                        <GridViewColumn Header="Destination" DisplayMemberBinding="{Binding DestinationFilePath}" Width="Auto" />
+                        <GridViewColumn Header="Title" DisplayMemberBinding="{Binding MovieInfo.Title}" Width="Auto" />
+                        <GridViewColumn Header="Year" DisplayMemberBinding="{Binding MovieInfo.ReleaseDate.Year}" Width="Auto" />
+                        <GridViewColumn Header="Genre" DisplayMemberBinding="{Binding MovieInfo.PrimaryGenre}" Width="Auto" />
+                        <GridViewColumn Header="Unknown Movie" DisplayMemberBinding="{Binding MovieInfo.IsUnknownMovie}" Width="Auto" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+    </DockPanel>
 </views:View>
 
